@@ -1,5 +1,5 @@
 import { createContext, createElement, useContext, useEffect, useMemo, useReducer, type ReactNode } from "react";
-import type { Transaction, WorkerTask, BusinessSource, Account, TxChannel, Worker, Role } from "./types";
+import type { Transaction, WorkerTask, BusinessSource, Account, TxChannel, Worker, Role, WorkerReport } from "./types";
 import { tasks as seedTasks, accounts as seedAccounts, workers as seedWorkers } from "./mockData";
 import { fetchAllTransactions } from "./api/feeds";
 
@@ -10,6 +10,7 @@ interface State {
   tasks: WorkerTask[];
   accounts: Account[];
   workers: Worker[];
+  reports: WorkerReport[];
   currentUserId: string; // joriy tizimga kirgan foydalanuvchi
 }
 
@@ -22,6 +23,7 @@ type Action =
   | { type: "UPDATE_ACCOUNT"; account: Account }
   | { type: "DELETE_ACCOUNT"; id: string }
   | { type: "ADD_WORKER"; worker: Worker }
+  | { type: "ADD_REPORT"; report: WorkerReport }
   | { type: "SET_CURRENT_USER"; id: string };
 
 function reducer(state: State, action: Action): State {
@@ -54,6 +56,8 @@ function reducer(state: State, action: Action): State {
       return { ...state, accounts: state.accounts.filter((a) => a.id !== action.id) };
     case "ADD_WORKER":
       return { ...state, workers: [...state.workers, action.worker] };
+    case "ADD_REPORT":
+      return { ...state, reports: [action.report, ...state.reports] };
     case "SET_CURRENT_USER":
       return { ...state, currentUserId: action.id };
     default:
@@ -85,6 +89,7 @@ interface Ctx extends State {
   updateAccount: (account: Account) => void;
   deleteAccount: (id: string) => void;
   addWorker: (worker: Omit<Worker, "id">) => void;
+  addReport: (report: Omit<WorkerReport, "id" | "createdAt">) => void;
   setCurrentUser: (id: string) => void;
   totals: { kirim: number; chiqim: number; foyda: number };
   bySource: { source: BusinessSource; kirim: number; chiqim: number; net: number }[];
@@ -99,6 +104,7 @@ export function FinansProvider({ children }: { children: ReactNode }) {
     tasks: seedTasks,
     accounts: loadAccounts(),
     workers: seedWorkers,
+    reports: [],
     currentUserId: seedWorkers[0].id, // boshda owner
   }));
 
@@ -182,6 +188,11 @@ export function FinansProvider({ children }: { children: ReactNode }) {
         dispatch({ type: "UPDATE_ACCOUNT", account: { ...account, updatedAt: new Date().toISOString() } }),
       deleteAccount: (id) => dispatch({ type: "DELETE_ACCOUNT", id }),
       addWorker: (worker) => dispatch({ type: "ADD_WORKER", worker: { ...worker, id: crypto.randomUUID() } }),
+      addReport: (report) =>
+        dispatch({
+          type: "ADD_REPORT",
+          report: { ...report, id: crypto.randomUUID(), createdAt: new Date().toISOString() },
+        }),
       setCurrentUser: (id) => dispatch({ type: "SET_CURRENT_USER", id }),
     };
   }, [state]);

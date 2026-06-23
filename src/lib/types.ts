@@ -68,6 +68,16 @@ export interface Worker {
   position: string; // lavozim: Ombor, Sotuv, Cargo...
 }
 
+// Ishchi tomonidan AI orqali topshirilgan kunlik hisobot
+export interface WorkerReport {
+  id: string;
+  author: string; // hisobot bergan ishchi
+  text: string; // asl matn (yozma yoki ovozdan)
+  aiSummary: string; // AI tuzgan xulosa
+  createdAt: string;
+  viaVoice?: boolean;
+}
+
 // ── To'lov tizimlari (Payme / Click) tranzaksiyalari ──
 export type PaymentProvider = "payme" | "click";
 export type PaymentStatus = "muvaffaqiyatli" | "kutilmoqda" | "bekor";

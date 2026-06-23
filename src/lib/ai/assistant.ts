@@ -81,6 +81,22 @@ export interface DailyStats {
   txCount: number;
 }
 
+// ── Ishchi hisobotini AI bilan tuzish/qisqartirish ──
+export async function summarizeWorkerReport(text: string): Promise<string> {
+  if (!aiEnabled) {
+    // Mock: oddiy qisqartma
+    const clean = text.trim().replace(/\s+/g, " ");
+    const short = clean.length > 140 ? clean.slice(0, 140) + "…" : clean;
+    return `Xulosa: ${short}`;
+  }
+  const prompt = `Sen menejer yordamchisisan. Ishchining kunlik hisobotini o'zbek tilida 1-2 gapda tuzib ber, asosiy raqamlarni (sotuv, qoldiq, bajarilgan ish) ajratib ko'rsat. Hisobot: "${text}"`;
+  try {
+    return await geminiGenerate(prompt);
+  } catch {
+    return `Xulosa: ${text.slice(0, 140)}`;
+  }
+}
+
 export async function generateDailySummary(s: DailyStats): Promise<string> {
   if (!aiEnabled) {
     const holat = s.foyda >= 0 ? "ijobiy" : "salbiy";
