@@ -4,17 +4,8 @@ import { Mic, Square, Sparkles } from "lucide-react";
 import { useFinans } from "../lib/store";
 import { sourceLabel, categoryLabel, fmtMoney } from "../lib/format";
 import type { BusinessSource, TxCategory, TxType } from "../lib/types";
-
-// ── Ovozli kiritishni TAQLID qiluvchi (mock) "AI parser" ──
-// Real loyihada: ovoz -> transcribe-audio -> LLM -> shu maydonlarni to'ldiradi.
-function fakeVoiceParse(): { type: TxType; amount: number; category: TxCategory; source: BusinessSource; note: string } {
-  const samples = [
-    { type: "chiqim" as TxType, amount: 1_500_000, category: "cargo" as TxCategory, source: "alicargo" as BusinessSource, note: "Cargo to'lovi (ovozli)" },
-    { type: "kirim" as TxType, amount: 980_000, category: "sotuv" as TxCategory, source: "store" as BusinessSource, note: "Do'kondan sotuv (ovozli)" },
-    { type: "chiqim" as TxType, amount: 350_000, category: "tovar_xarid" as TxCategory, source: "boshqa" as BusinessSource, note: "Tovar xaridi (ovozli)" },
-  ];
-  return samples[Math.floor(Math.random() * samples.length)];
-}
+import { parseTransactionFromText, aiEnabled } from "../lib/ai/assistant";
+import { startDictation, voiceSupported } from "../lib/ai/voice";
 
 const sources: BusinessSource[] = ["uzum", "yandex", "alicargo", "store", "click", "payme", "naqd", "boshqa"];
 const categories: TxCategory[] = ["sotuv", "cargo", "tovar_xarid", "maosh", "ijara", "reklama", "patent", "komissiya", "boshqa"];
@@ -30,21 +21,41 @@ export default function AddTransaction() {
   const [note, setNote] = useState("");
   const [createdBy, setCreatedBy] = useState(workers[0].name);
   const [recording, setRecording] = useState(false);
+  const [thinking, setThinking] = useState(false);
+  const [heard, setHeard] = useState("");
   const [viaVoice, setViaVoice] = useState(false);
 
+  const applyParsed = async (text: string) => {
+    setHeard(text);
+    setThinking(true);
+    const p = await parseTransactionFromText(text);
+    setType(p.type);
+    setAmount(String(p.amount));
+    setCategory(p.category);
+    setSource(p.source);
+    setNote(p.note);
+    setViaVoice(true);
+    setThinking(false);
+  };
+
   const handleVoice = () => {
+    // Real ovozli kiritish — agar brauzer qo'llamasa, namuna matn bilan
+    if (!voiceSupported()) {
+      applyParsed("Alicargo cargo to'lovi 1500000 so'm");
+      return;
+    }
     setRecording(true);
-    // Yozib olishni taqlid qilamiz, 1.2s dan keyin "AI" maydonlarni to'ldiradi
-    setTimeout(() => {
-      const p = fakeVoiceParse();
-      setType(p.type);
-      setAmount(String(p.amount));
-      setCategory(p.category);
-      setSource(p.source);
-      setNote(p.note);
-      setViaVoice(true);
-      setRecording(false);
-    }, 1200);
+    const d = startDictation(
+      (text) => {
+        setRecording(false);
+        applyParsed(text);
+      },
+      () => {
+        setRecording(false);
+        applyParsed("Alicargo cargo to'lovi 1500000 so'm");
+      },
+    );
+    if (!d) setRecording(false);
   };
 
   const submit = (e: React.FormEvent) => {
@@ -65,20 +76,21 @@ export default function AddTransaction() {
           <Sparkles size={18} /> Ovozli kiritish (AI)
         </div>
         <p className="text-sm text-slate-600 mb-3">
-          Ishchi gapirib kirim/chiqimni aytadi — tizim avtomatik to'ldiradi.
-          <span className="text-slate-400"> (hozircha taqlid)</span>
+          Ishchi gapirib kirim/chiqimni aytadi — {aiEnabled ? "Gemini AI" : "tizim"} avtomatik to'ldiradi.
+          <span className="text-slate-400"> {aiEnabled ? "(Gemini ulangan)" : "(AI kalitsiz — mock)"}</span>
         </p>
         <button
           type="button"
           onClick={handleVoice}
-          disabled={recording}
+          disabled={recording || thinking}
           className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white text-sm font-medium ${
             recording ? "bg-red-500 animate-pulse" : "bg-brand-600 hover:bg-brand-700"
           }`}
         >
           {recording ? <Square size={16} /> : <Mic size={16} />}
-          {recording ? "Tinglanmoqda..." : "Gapirib kiritish"}
+          {recording ? "Tinglanmoqda..." : thinking ? "AI tahlil qilmoqda..." : "Gapirib kiritish"}
         </button>
+        {heard && <p className="text-xs text-slate-500 mt-2">Eshitildi: "{heard}"</p>}
       </div>
 
       <form onSubmit={submit} className="bg-white rounded-xl border border-slate-200 p-5 space-y-4">

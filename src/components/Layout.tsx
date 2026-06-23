@@ -9,6 +9,7 @@ import {
   Users,
 } from "lucide-react";
 import { useFinans } from "../lib/store";
+import ReminderBar from "./ReminderBar";
 
 const nav = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
@@ -53,6 +54,7 @@ export default function Layout() {
         </div>
       </aside>
       <main className="flex-1 p-6 max-w-[1200px]">
+        <ReminderBar />
         <Outlet />
       </main>
     </div>
