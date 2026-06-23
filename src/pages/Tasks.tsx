@@ -16,10 +16,14 @@ const nextStatus: Record<TaskStatus, TaskStatus> = {
 };
 
 export default function Tasks() {
-  const { tasks, workers, addTask, setTaskStatus } = useFinans();
+  const { tasks, workers, addTask, setTaskStatus, currentUser, canAssignTasks } = useFinans();
+  const ishchilar = workers.filter((w) => w.role === "ishchi");
   const [title, setTitle] = useState("");
-  const [assignedTo, setAssignedTo] = useState(workers[1].name);
+  const [assignedTo, setAssignedTo] = useState((ishchilar[0] ?? workers[0]).name);
   const [voiceMode, setVoiceMode] = useState(false);
+
+  // Ishchi faqat o'ziga berilgan vazifalarni ko'radi; owner/admin hammasini
+  const visibleTasks = canAssignTasks ? tasks : tasks.filter((t) => t.assignedTo === currentUser.name);
 
   const add = (viaVoice: boolean) => {
     if (!title.trim()) return;
@@ -32,11 +36,14 @@ export default function Tasks() {
       <div>
         <h1 className="text-2xl font-bold">Ishchilar vazifalari</h1>
         <p className="text-slate-500 text-sm">
-          Admin vazifa biriktiradi — Telegram bot ishchiga yetkazadi (real integratsiya keyin)
+          {canAssignTasks
+            ? "Admin vazifa biriktiradi — Telegram bot ishchiga yetkazadi (real integratsiya keyin)"
+            : "Sizga biriktirilgan vazifalar"}
         </p>
       </div>
 
-      {/* Vazifa yaratish */}
+      {/* Vazifa yaratish — faqat owner/admin */}
+      {canAssignTasks && (
       <div className="bg-white rounded-xl border border-slate-200 p-5 space-y-3">
         <div className="flex items-center gap-2">
           <button
@@ -60,7 +67,7 @@ export default function Tasks() {
             className="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm"
           />
           <select value={assignedTo} onChange={(e) => setAssignedTo(e.target.value)} className="border border-slate-200 rounded-lg px-3 py-2 text-sm">
-            {workers.map((w) => (
+            {ishchilar.map((w) => (
               <option key={w.id} value={w.name}>{w.name}</option>
             ))}
           </select>
@@ -73,10 +80,11 @@ export default function Tasks() {
           </button>
         </div>
       </div>
+      )}
 
       {/* Vazifalar ro'yxati */}
       <div className="space-y-2">
-        {tasks.map((t) => (
+        {visibleTasks.map((t) => (
           <div key={t.id} className="bg-white rounded-xl border border-slate-200 p-4 flex items-center justify-between">
             <div>
               <div className="font-medium flex items-center gap-2">

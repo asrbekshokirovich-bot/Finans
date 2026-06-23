@@ -13,10 +13,10 @@ import {
 } from "recharts";
 import StatCard from "../components/StatCard";
 import { useFinans } from "../lib/store";
-import { fmtMoney, sourceLabel, sourceColor } from "../lib/format";
+import { fmtMoney, sourceLabel, sourceColor, channelLabel, channelColor } from "../lib/format";
 
 export default function Dashboard() {
-  const { totals, bySource, accounts, transactions } = useFinans();
+  const { totals, bySource, byChannel, accounts, transactions } = useFinans();
 
   const barData = bySource.map((s) => ({
     name: sourceLabel[s.source],
@@ -76,6 +76,24 @@ export default function Dashboard() {
               <Legend wrapperStyle={{ fontSize: 11 }} />
             </PieChart>
           </ResponsiveContainer>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-xl border border-slate-200 p-5">
+        <h2 className="font-semibold mb-1">Ma'lumot manbalari bo'yicha</h2>
+        <p className="text-xs text-slate-400 mb-4">Kirim/chiqim Telegram bot va saytdagi ma'lumotlardan yig'iladi</p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {byChannel.map((c) => (
+            <div key={c.channel} className="border border-slate-100 rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-2.5 h-2.5 rounded-full" style={{ background: channelColor[c.channel] }} />
+                <span className="font-medium text-sm">{channelLabel[c.channel]}</span>
+                <span className="text-xs text-slate-400 ml-auto">{c.count} ta</span>
+              </div>
+              <div className="text-xs text-emerald-600">Kirim: {fmtMoney(c.kirim)}</div>
+              <div className="text-xs text-red-500">Chiqim: {fmtMoney(c.chiqim)}</div>
+            </div>
+          ))}
         </div>
       </div>
 

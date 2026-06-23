@@ -3,7 +3,19 @@ import { fmtMoney, sourceLabel, categoryLabel } from "../lib/format";
 import type { TxCategory } from "../lib/types";
 
 export default function Reports() {
-  const { transactions, bySource } = useFinans();
+  const { transactions, bySource, canAssignTasks } = useFinans();
+
+  // Hisobotlar faqat owner/admin uchun
+  if (!canAssignTasks) {
+    return (
+      <div className="max-w-4xl">
+        <h1 className="text-2xl font-bold">Hisobotlar</h1>
+        <div className="mt-4 text-center text-slate-400 border border-dashed border-slate-200 rounded-xl py-12">
+          Hisobotlarni faqat egasi (owner) va admin ko'ra oladi.
+        </div>
+      </div>
+    );
+  }
 
   // Kategoriya bo'yicha chiqimlar
   const expByCat = new Map<TxCategory, number>();

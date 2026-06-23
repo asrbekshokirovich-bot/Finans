@@ -13,6 +13,12 @@ export type BusinessSource =
 
 export type TxType = "kirim" | "chiqim";
 
+// Ma'lumot qaysi kanaldan keldi — kirim/chiqim shular bo'yicha yig'iladi.
+// telegram = bot orqali ishchilar xabari (ovozli/matn)
+// sayt     = saytdagi ma'lumotlar (Uzum/Yandex/onlayn do'kon/Payme/Click)
+// qol      = adminning qo'lda kiritgani
+export type TxChannel = "telegram" | "sayt" | "qol";
+
 // Chiqim/kirim kategoriyalari
 export type TxCategory =
   | "sotuv" // tovar sotuvidan tushum
@@ -34,6 +40,7 @@ export interface Transaction {
   note: string;
   createdAt: string; // ISO sana
   createdBy: string; // ishchi/admin ismi
+  channel: TxChannel; // ma'lumot qaysi kanaldan keldi
   viaVoice?: boolean; // ovozli xabar orqali kiritilganmi
 }
 
@@ -48,10 +55,17 @@ export interface WorkerTask {
   viaVoice?: boolean; // admin ovozli buyruq orqali yaratganmi
 }
 
+// Tizim rollari:
+//   owner  — asosiy egasi (to'liq huquq, ishchi qo'sha oladi)
+//   admin  — boshqaruvchi (vazifa beradi, hisobot oladi, ishchi qo'sha oladi)
+//   ishchi — oddiy xodim (faqat o'ziga berilgan vazifalar va kirim/chiqim)
+export type Role = "owner" | "admin" | "ishchi";
+
 export interface Worker {
   id: string;
   name: string;
-  role: string;
+  role: Role;
+  position: string; // lavozim: Ombor, Sotuv, Cargo...
 }
 
 // Hisob (karta / patent / naqd) qoldiqlari

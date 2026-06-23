@@ -1,4 +1,4 @@
-import type { BusinessSource, TxCategory } from "./types";
+import type { BusinessSource, TxCategory, TxChannel } from "./types";
 
 export const fmtMoney = (n: number) =>
   new Intl.NumberFormat("uz-UZ").format(Math.round(n)) + " so'm";
@@ -30,6 +30,18 @@ export const sourceColor: Record<BusinessSource, string> = {
   payme: "#06b6d4",
   naqd: "#64748b",
   boshqa: "#94a3b8",
+};
+
+export const channelLabel: Record<TxChannel, string> = {
+  telegram: "Telegram bot",
+  sayt: "Sayt",
+  qol: "Qo'lda",
+};
+
+export const channelColor: Record<TxChannel, string> = {
+  telegram: "#0ea5e9",
+  sayt: "#4f46e5",
+  qol: "#64748b",
 };
 
 export const categoryLabel: Record<TxCategory, string> = {

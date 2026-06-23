@@ -6,7 +6,9 @@ import {
   ListTodo,
   PieChart,
   Wallet,
+  Users,
 } from "lucide-react";
+import { useFinans } from "../lib/store";
 
 const nav = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
@@ -15,9 +17,11 @@ const nav = [
   { to: "/tasks", label: "Vazifalar", icon: ListTodo },
   { to: "/reports", label: "Hisobotlar", icon: PieChart },
   { to: "/accounts", label: "Hisoblar", icon: Wallet },
+  { to: "/workers", label: "Ishchilar", icon: Users },
 ];
 
 export default function Layout() {
+  const { currentUser } = useFinans();
   return (
     <div className="min-h-screen flex">
       <aside className="w-60 shrink-0 bg-white border-r border-slate-200 flex flex-col">
@@ -42,8 +46,10 @@ export default function Layout() {
             </NavLink>
           ))}
         </nav>
-        <div className="p-4 text-[11px] text-slate-400 border-t border-slate-100">
-          UI prototip · integratsiyasiz
+        <div className="p-4 border-t border-slate-100">
+          <div className="text-sm font-medium text-slate-700">{currentUser.name}</div>
+          <div className="text-[11px] text-slate-400 capitalize">{currentUser.role} · {currentUser.position}</div>
+          <div className="text-[11px] text-slate-300 mt-2">UI prototip · integratsiyasiz</div>
         </div>
       </aside>
       <main className="flex-1 p-6 max-w-[1200px]">

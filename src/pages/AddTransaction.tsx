@@ -136,7 +136,7 @@ export default function AddTransaction() {
         <Field label="Kim kiritdi">
           <select value={createdBy} onChange={(e) => setCreatedBy(e.target.value)} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm">
             {workers.map((w) => (
-              <option key={w.id} value={w.name}>{w.name} — {w.role}</option>
+              <option key={w.id} value={w.name}>{w.name} — {w.position}</option>
             ))}
           </select>
         </Field>

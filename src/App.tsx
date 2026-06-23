@@ -6,6 +6,7 @@ import AddTransaction from "./pages/AddTransaction";
 import Tasks from "./pages/Tasks";
 import Reports from "./pages/Reports";
 import Accounts from "./pages/Accounts";
+import Workers from "./pages/Workers";
 
 export default function App() {
   return (
@@ -17,6 +18,7 @@ export default function App() {
         <Route path="tasks" element={<Tasks />} />
         <Route path="reports" element={<Reports />} />
         <Route path="accounts" element={<Accounts />} />
+        <Route path="workers" element={<Workers />} />
       </Route>
     </Routes>
   );
