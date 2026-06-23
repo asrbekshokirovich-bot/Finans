@@ -1,4 +1,5 @@
 import { geminiGenerate, aiEnabled } from "./gemini";
+import { parseAmount } from "./numberWords";
 import type { BusinessSource, TxCategory, TxType } from "../types";
 import { fmtMoney } from "../format";
 
@@ -17,45 +18,65 @@ export interface ParsedTx {
 const sources: BusinessSource[] = ["uzum", "yandex", "alicargo", "store", "click", "payme", "naqd", "boshqa"];
 const categories: TxCategory[] = ["sotuv", "cargo", "tovar_xarid", "maosh", "ijara", "reklama", "patent", "komissiya", "boshqa"];
 
-// Mock fallback (kalitsiz holatda) — matndan oddiy qoidalar bilan ajratadi
+// Mock fallback (kalitsiz holatda) — o'zbek + rus + jonli til qoidalari bilan
 function mockParse(text: string): ParsedTx {
-  const t = text.toLowerCase();
-  const amtMatch = t.match(/(\d[\d\s.,]*)\s*(mln|million|ming|so'm|som)?/);
-  let amount = 0;
-  if (amtMatch) {
-    amount = Number(amtMatch[1].replace(/[\s.,]/g, ""));
-    if (/mln|million/.test(amtMatch[2] ?? "")) amount *= 1_000_000;
-    else if (/ming/.test(amtMatch[2] ?? "")) amount *= 1_000;
-  }
-  const type: TxType = /sot|tushum|kirim|keldi/.test(t) ? "kirim" : "chiqim";
+  const t = text.toLowerCase().replace(/[’`]/g, "'");
+
+  // Summa — so'z bilan ham, raqam bilan ham
+  const amount = parseAmount(t);
+
+  // Kirim/chiqim aniqlash — fe'l va kalit so'zlar (o'zbek + rus + jonli)
+  // Pul KIRDI (kirim): kimdir berdi/o'tkazdi/tashladi, sotildi, tushdi, keldi
+  const kirimRe =
+    /\b(kirim|kirdi|kird|tushdi|tushum|keldi|kel|sot(d|i|u|v)|sotildi|sotdim|berishdi|berdi|o'tkazishdi|o'tkazdi|tashlashdi|tashladi|oldim|olindi|qaytdi)\b|приход|продаж|продал|пришл|поступил|получил|оплатил[аи]|закинул|перевел[аи]|вернул/;
+  // Pul CHIQDI (chiqim): men berdim/to'ladim/o'tkazdim, xarid, to'lov
+  const chiqimRe =
+    /\b(chiqim|chiqdi|berdim|to'ladim|to'lov|to'la|xarid|sotib oldim|harid|o'tkazdim|sarfladim|ketdi)\b|расход|оплатил|заплатил|потратил|купил|перевёл|отдал/;
+
+  let type: TxType = "chiqim";
+  if (kirimRe.test(t) && !chiqimRe.test(t)) type = "kirim";
+  else if (chiqimRe.test(t) && !kirimRe.test(t)) type = "chiqim";
+  else if (/\b(berishdi|berdi|o'tkazishdi|tushdi|keldi|sot)\b/.test(t)) type = "kirim"; // 3-shaxs "berishdi" = menga berdi
+  else if (/\b(berdim|to'ladim|oldim)\b/.test(t)) type = "chiqim";
+
   let category: TxCategory = "boshqa";
-  if (/cargo|yetkaz/.test(t)) category = "cargo";
-  else if (/maosh|oylik/.test(t)) category = "maosh";
-  else if (/sot/.test(t)) category = "sotuv";
-  else if (/ijara/.test(t)) category = "ijara";
-  else if (/reklama/.test(t)) category = "reklama";
-  else if (/patent|soliq/.test(t)) category = "patent";
+  if (/cargo|yetkaz|карго|доставк/.test(t)) category = "cargo";
+  else if (/maosh|oylik|зарплат|зп/.test(t)) category = "maosh";
+  else if (/sot|продаж|продал/.test(t)) category = "sotuv";
+  else if (/ijara|аренд/.test(t)) category = "ijara";
+  else if (/reklama|реклам/.test(t)) category = "reklama";
+  else if (/patent|soliq|налог/.test(t)) category = "patent";
+  else if (/tovar|xarid|закуп|товар/.test(t)) category = "tovar_xarid";
+  else if (/komiss|комисси/.test(t)) category = "komissiya";
+
   let source: BusinessSource = "naqd";
-  if (/uzum/.test(t)) source = "uzum";
-  else if (/yandex/.test(t)) source = "yandex";
-  else if (/click/.test(t)) source = "click";
-  else if (/payme/.test(t)) source = "payme";
-  else if (/cargo|ali/.test(t)) source = "alicargo";
+  if (/uzum|узум/.test(t)) source = "uzum";
+  else if (/yandex|яндекс/.test(t)) source = "yandex";
+  else if (/click|клик/.test(t)) source = "click";
+  else if (/payme|пайми/.test(t)) source = "payme";
+  else if (/cargo|ali|карго/.test(t)) source = "alicargo";
+  else if (/do'kon|dukon|магазин|store/.test(t)) source = "store";
+
   return { type, amount, category, source, note: text.trim() || "Ovozli yozuv" };
 }
 
 export async function parseTransactionFromText(text: string): Promise<ParsedTx> {
   if (!aiEnabled) return mockParse(text);
 
-  const prompt = `Sen moliya yordamchisisan. Quyidagi o'zbekcha xabardan kirim/chiqim yozuvini ajrat va FAQAT JSON qaytar.
+  const prompt = `Sen O'zbekistondagi biznes uchun moliya yordamchisisan. Xabar o'zbek tilida, rus tilida yoki ARALASH (kod-almashinuv), jonli/ko'cha tilida bo'lishi mumkin. Shevalar va so'z bilan aytilgan raqamlarni ham tushun.
+
 Xabar: "${text}"
-Maydonlar:
-- type: "kirim" yoki "chiqim"
-- amount: raqam (so'mda, masalan 1500000)
+
+Quyidagilarni ajrat va FAQAT JSON qaytar (boshqa matn yozma):
+- type: "kirim" (pul kelgan: sotuv, kimdir to'lagan/o'tkazgan/bergan, tushum) yoki "chiqim" (pul ketgan: men to'ladim, xarid, cargo, maosh)
+- amount: butun raqam so'mda. So'z bilan aytilsa hisobla: "yuz ming"=100000, "ikki yarim million"=2500000, "besh yuz ming"=500000, "сто тысяч"=100000, "два лимона"=2000000.
 - category: ${categories.join(", ")}
 - source: ${sources.join(", ")}
-- note: qisqa izoh
-JSON namuna: {"type":"chiqim","amount":1500000,"category":"cargo","source":"alicargo","note":"Cargo to'lovi"}`;
+- note: qisqa izoh (asl tilda)
+
+Muhim: "berishdi/o'tkazishdi/tushdi/keldi" = kirim. "berdim/to'ladim/oldim" = chiqim.
+
+JSON namuna: {"type":"kirim","amount":100000,"category":"sotuv","source":"naqd","note":"Mijoz yuz ming berdi"}`;
 
   try {
     const raw = await geminiGenerate(prompt, { json: true });
