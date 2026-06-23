@@ -1,0 +1,9 @@
+{
+  "name": "finans-bot",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Finans tizimi uchun Telegram bot maketi (buyruqlar + AI hisobot + ovozli kiritish)",
+  "scripts": {
+    "start": "node src/index.js"
+  }
+}

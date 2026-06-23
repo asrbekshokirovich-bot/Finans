@@ -8,3 +8,7 @@ dist-ssr
 
 # AI sozlamalari namunasi (real .env commit qilinmaydi)
 !.env.example
+
+# Bot
+bot/.env
+bot/node_modules
