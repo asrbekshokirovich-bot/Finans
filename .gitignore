@@ -1,0 +1,10 @@
+node_modules
+dist
+dist-ssr
+*.local
+.env
+.env.*
+.DS_Store
+
+# AI sozlamalari namunasi (real .env commit qilinmaydi)
+!.env.example
