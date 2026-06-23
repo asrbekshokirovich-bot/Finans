@@ -55,9 +55,17 @@ export interface Worker {
 }
 
 // Hisob (karta / patent / naqd) qoldiqlari
+export type AccountType = "karta" | "naqd" | "patent" | "bank";
+
 export interface Account {
   id: string;
   name: string;
-  type: "karta" | "naqd" | "patent";
-  balance: number;
+  type: AccountType;
+  balance: number; // so'mda
+  // Qo'lda kiritiladigan rekvizitlar (integratsiyasiz). Kelajakda bank API yoki
+  // Payme/Click shu maydonlar orqali ulanadi.
+  bankName?: string; // bank nomi (Kapitalbank, Hamkorbank...)
+  cardNumber?: string; // karta raqami (oxirgi 4 raqam yoki to'liq)
+  accountNumber?: string; // hisob-kitob raqami (20 xonali)
+  updatedAt?: string; // qoldiq oxirgi marta yangilangan vaqt
 }
