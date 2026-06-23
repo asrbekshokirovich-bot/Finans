@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Mic, Plus, Send } from "lucide-react";
 import { useFinans } from "../lib/store";
+import { useToast } from "../lib/toast";
 import { fmtDate } from "../lib/format";
 import type { TaskStatus } from "../lib/types";
 
@@ -17,6 +18,7 @@ const nextStatus: Record<TaskStatus, TaskStatus> = {
 
 export default function Tasks() {
   const { tasks, workers, addTask, setTaskStatus, currentUser, canAssignTasks } = useFinans();
+  const toast = useToast();
   const ishchilar = workers.filter((w) => w.role === "ishchi");
   const [title, setTitle] = useState("");
   const [assignedTo, setAssignedTo] = useState((ishchilar[0] ?? workers[0]).name);
@@ -29,6 +31,7 @@ export default function Tasks() {
     if (!title.trim()) return;
     addTask({ title: title.trim(), assignedTo, viaVoice });
     setTitle("");
+    toast(viaVoice ? `${assignedTo}ga ovozli vazifa yuborildi` : `Vazifa ${assignedTo}ga biriktirildi`, "success");
   };
 
   return (
@@ -44,7 +47,7 @@ export default function Tasks() {
 
       {/* Vazifa yaratish — faqat owner/admin */}
       {canAssignTasks && (
-      <div className="bg-white rounded-xl border border-slate-200 p-5 space-y-3">
+      <div className="card p-5 space-y-3">
         <div className="flex items-center gap-2">
           <button
             onClick={() => setVoiceMode((v) => !v)}
@@ -85,7 +88,7 @@ export default function Tasks() {
       {/* Vazifalar ro'yxati */}
       <div className="space-y-2">
         {visibleTasks.map((t) => (
-          <div key={t.id} className="bg-white rounded-xl border border-slate-200 p-4 flex items-center justify-between">
+          <div key={t.id} className="card p-4 flex items-center justify-between transition-all hover:shadow-card animate-slideUp">
             <div>
               <div className="font-medium flex items-center gap-2">
                 {t.viaVoice && <Mic size={14} className="text-brand-500" />}

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Mic, Square, Sparkles } from "lucide-react";
 import { useFinans } from "../lib/store";
+import { useToast } from "../lib/toast";
 import { sourceLabel, categoryLabel, fmtMoney } from "../lib/format";
 import type { BusinessSource, TxCategory, TxType } from "../lib/types";
 import { parseTransactionFromText, aiEnabled } from "../lib/ai/assistant";
@@ -12,6 +13,7 @@ const categories: TxCategory[] = ["sotuv", "cargo", "tovar_xarid", "maosh", "ija
 
 export default function AddTransaction() {
   const { addTransaction, workers } = useFinans();
+  const toast = useToast();
   const navigate = useNavigate();
 
   const [type, setType] = useState<TxType>("chiqim");
@@ -61,8 +63,12 @@ export default function AddTransaction() {
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     const num = Number(amount);
-    if (!num) return;
+    if (!num) {
+      toast("Summa kiritilmadi", "warning");
+      return;
+    }
     addTransaction({ type, amount: num, category, source, note: note || "—", createdBy, viaVoice });
+    toast(`${type === "kirim" ? "Kirim" : "Chiqim"} saqlandi: ${fmtMoney(num)}`, "success");
     navigate("/transactions");
   };
 
@@ -93,7 +99,7 @@ export default function AddTransaction() {
         {heard && <p className="text-xs text-slate-500 mt-2">Eshitildi: "{heard}"</p>}
       </div>
 
-      <form onSubmit={submit} className="bg-white rounded-xl border border-slate-200 p-5 space-y-4">
+      <form onSubmit={submit} className="card p-5 space-y-4 animate-slideUp">
         <div className="flex gap-2">
           {(["kirim", "chiqim"] as TxType[]).map((t) => (
             <button
@@ -153,7 +159,7 @@ export default function AddTransaction() {
           </select>
         </Field>
 
-        <button type="submit" className="w-full bg-brand-600 hover:bg-brand-700 text-white rounded-lg py-2.5 text-sm font-medium">
+        <button type="submit" className="btn-primary w-full py-2.5">
           Saqlash
         </button>
       </form>

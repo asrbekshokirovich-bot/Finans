@@ -69,7 +69,7 @@ export interface Worker {
 }
 
 // Hisob (karta / patent / naqd) qoldiqlari
-export type AccountType = "karta" | "naqd" | "patent" | "bank";
+export type AccountType = "karta" | "naqd" | "soliq" | "bank";
 
 export interface Account {
   id: string;

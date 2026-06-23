@@ -50,7 +50,7 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 p-5">
+        <div className="lg:col-span-2 card p-5">
           <h2 className="font-semibold mb-4">Biznes bo'yicha kirim / chiqim</h2>
           <ResponsiveContainer width="100%" height={280}>
             <BarChart data={barData}>
@@ -63,7 +63,7 @@ export default function Dashboard() {
           </ResponsiveContainer>
         </div>
 
-        <div className="bg-white rounded-xl border border-slate-200 p-5">
+        <div className="card p-5">
           <h2 className="font-semibold mb-4">Kirim manbalari</h2>
           <ResponsiveContainer width="100%" height={280}>
             <PieChart>
@@ -79,7 +79,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 p-5">
+      <div className="card p-5">
         <h2 className="font-semibold mb-1">Ma'lumot manbalari bo'yicha</h2>
         <p className="text-xs text-slate-400 mb-4">Kirim/chiqim Telegram bot va saytdagi ma'lumotlardan yig'iladi</p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -97,7 +97,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 p-5">
+      <div className="card p-5">
         <h2 className="font-semibold mb-3">So'nggi yozuvlar</h2>
         <div className="space-y-2">
           {transactions.slice(0, 5).map((t) => (

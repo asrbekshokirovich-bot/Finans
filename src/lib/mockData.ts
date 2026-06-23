@@ -14,7 +14,24 @@ export const accounts: Account[] = [
   { id: "a1", name: "Uzcard ****1234", type: "karta", balance: 18_500_000 },
   { id: "a2", name: "Humo ****5678", type: "karta", balance: 7_200_000 },
   { id: "a3", name: "Naqd kassa", type: "naqd", balance: 3_400_000 },
-  { id: "a4", name: "Patent hisobi", type: "patent", balance: 1_250_000 },
+  { id: "a4", name: "Soliq hisobi", type: "soliq", balance: 1_250_000 },
+];
+
+// Mahsulot bo'yicha foyda (P&L) — mock. Real holatda Uzum/Yandex hisobotidan keladi.
+export interface ProductPnl {
+  id: string;
+  name: string;
+  sold: number; // sotilgan dona
+  revenue: number; // tushum (brutto)
+  cost: number; // tannarx + komissiya + cargo
+}
+
+export const productPnl: ProductPnl[] = [
+  { id: "p1", name: "Simsiz quloqchin TWS", sold: 142, revenue: 18_460_000, cost: 11_360_000 },
+  { id: "p2", name: "Powerbank 20000mAh", sold: 98, revenue: 14_700_000, cost: 9_800_000 },
+  { id: "p3", name: "Smart soat X8", sold: 67, revenue: 13_400_000, cost: 10_720_000 },
+  { id: "p4", name: "Telefon stend", sold: 210, revenue: 6_300_000, cost: 3_150_000 },
+  { id: "p5", name: "USB-C kabel 1m", sold: 305, revenue: 4_575_000, cost: 4_270_000 },
 ];
 
 const daysAgo = (d: number) => {

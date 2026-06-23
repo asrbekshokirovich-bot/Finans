@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { UserPlus, Shield, Crown, User, X } from "lucide-react";
 import { useFinans } from "../lib/store";
+import { useToast } from "../lib/toast";
 import type { Role } from "../lib/types";
 
 const roleLabel: Record<Role, string> = {
@@ -21,6 +22,7 @@ const roleStyle: Record<Role, string> = {
 
 export default function Workers() {
   const { workers, currentUser, canManageWorkers, addWorker, setCurrentUser } = useFinans();
+  const toast = useToast();
 
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
@@ -30,6 +32,7 @@ export default function Workers() {
   function save() {
     if (!name.trim()) return;
     addWorker({ name: name.trim(), position: position.trim() || "Xodim", role });
+    toast(`${name.trim()} jamoaga qo'shildi`, "success");
     setName("");
     setPosition("");
     setRole("ishchi");
@@ -44,17 +47,14 @@ export default function Workers() {
           <p className="text-slate-500 text-sm">Jamoa a'zolari, rollar va huquqlar</p>
         </div>
         {canManageWorkers && (
-          <button
-            onClick={() => setOpen(true)}
-            className="shrink-0 inline-flex items-center gap-1.5 bg-brand-600 text-white text-sm font-medium rounded-lg px-3.5 py-2 hover:bg-brand-700"
-          >
+          <button onClick={() => setOpen(true)} className="btn-primary shrink-0">
             <UserPlus size={16} /> Ishchi qo'shish
           </button>
         )}
       </div>
 
       {/* Joriy foydalanuvchi (rol almashtirish — sinov uchun) */}
-      <div className="bg-white rounded-xl border border-slate-200 p-4 flex items-center gap-3 flex-wrap">
+      <div className="card p-4 flex items-center gap-3 flex-wrap">
         <span className="text-sm text-slate-500">Joriy foydalanuvchi:</span>
         <select
           value={currentUser.id}
@@ -78,7 +78,7 @@ export default function Workers() {
       {/* Ro'yxat */}
       <div className="space-y-2">
         {workers.map((w) => (
-          <div key={w.id} className="bg-white rounded-xl border border-slate-200 p-4 flex items-center gap-4">
+          <div key={w.id} className="card p-4 flex items-center gap-4 transition-all hover:shadow-card animate-slideUp">
             <div className="w-10 h-10 rounded-full bg-brand-50 text-brand-600 flex items-center justify-center font-semibold">
               {w.name.charAt(0)}
             </div>
@@ -101,7 +101,7 @@ export default function Workers() {
 
       {open && canManageWorkers && (
         <div className="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
-          <div className="bg-white w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl p-5 space-y-4">
+          <div className="bg-white w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl p-5 space-y-4 animate-slideUp">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold">Yangi ishchi</h2>
               <button onClick={() => setOpen(false)} className="p-1 text-slate-400 hover:text-slate-700">
@@ -127,10 +127,10 @@ export default function Workers() {
             </label>
 
             <div className="flex gap-2 pt-1">
-              <button onClick={() => setOpen(false)} className="flex-1 border border-slate-200 rounded-lg py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50">
+              <button onClick={() => setOpen(false)} className="btn-ghost flex-1">
                 Bekor qilish
               </button>
-              <button onClick={save} className="flex-1 bg-brand-600 text-white rounded-lg py-2.5 text-sm font-medium hover:bg-brand-700">
+              <button onClick={save} className="btn-primary flex-1">
                 Saqlash
               </button>
             </div>

@@ -1,5 +1,6 @@
 import { useFinans } from "../lib/store";
 import { fmtMoney, sourceLabel, categoryLabel } from "../lib/format";
+import { productPnl } from "../lib/mockData";
 import type { TxCategory } from "../lib/types";
 
 export default function Reports() {
@@ -25,11 +26,20 @@ export default function Reports() {
   const cats = [...expByCat.entries()].sort((a, b) => b[1] - a[1]);
   const maxCat = cats[0]?.[1] ?? 1;
 
+  // Mahsulot bo'yicha foyda (SKU P&L)
+  const products = productPnl
+    .map((p) => {
+      const profit = p.revenue - p.cost;
+      const margin = p.revenue ? (profit / p.revenue) * 100 : 0;
+      return { ...p, profit, margin };
+    })
+    .sort((a, b) => b.profit - a.profit);
+
   return (
     <div className="space-y-6 max-w-4xl">
       <h1 className="text-2xl font-bold">Hisobotlar</h1>
 
-      <div className="bg-white rounded-xl border border-slate-200 p-5">
+      <div className="card p-5">
         <h2 className="font-semibold mb-4">Biznes bo'yicha sof natija</h2>
         <div className="space-y-3">
           {bySource
@@ -47,7 +57,7 @@ export default function Reports() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 p-5">
+      <div className="card p-5">
         <h2 className="font-semibold mb-4">Chiqimlar kategoriya bo'yicha</h2>
         <div className="space-y-3">
           {cats.map(([cat, val]) => (
@@ -57,10 +67,50 @@ export default function Reports() {
                 <span className="text-slate-500">{fmtMoney(val)}</span>
               </div>
               <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                <div className="h-full bg-brand-500 rounded-full" style={{ width: `${(val / maxCat) * 100}%` }} />
+                <div className="h-full bg-brand-500 rounded-full transition-all" style={{ width: `${(val / maxCat) * 100}%` }} />
               </div>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Mahsulot bo'yicha foyda — SKU P&L */}
+      <div className="card p-5">
+        <h2 className="font-semibold mb-1">Mahsulot bo'yicha foyda (SKU)</h2>
+        <p className="text-xs text-slate-400 mb-4">Tushum − (tannarx + komissiya + cargo). Real holatda Uzum/Yandex hisobotidan keladi.</p>
+        <div className="overflow-x-auto -mx-5">
+          <table className="w-full text-sm min-w-[520px]">
+            <thead className="text-slate-400 text-left text-xs">
+              <tr>
+                <th className="px-5 py-2 font-medium">Mahsulot</th>
+                <th className="px-3 py-2 font-medium text-right">Sotildi</th>
+                <th className="px-3 py-2 font-medium text-right">Tushum</th>
+                <th className="px-3 py-2 font-medium text-right">Foyda</th>
+                <th className="px-5 py-2 font-medium text-right">Marja</th>
+              </tr>
+            </thead>
+            <tbody>
+              {products.map((p) => (
+                <tr key={p.id} className="border-t border-slate-100 hover:bg-slate-50/70 transition">
+                  <td className="px-5 py-3 font-medium">{p.name}</td>
+                  <td className="px-3 py-3 text-right text-slate-500">{p.sold}</td>
+                  <td className="px-3 py-3 text-right text-slate-500">{fmtMoney(p.revenue)}</td>
+                  <td className={`px-3 py-3 text-right font-semibold ${p.profit >= 0 ? "text-emerald-600" : "text-red-500"}`}>
+                    {fmtMoney(p.profit)}
+                  </td>
+                  <td className="px-5 py-3 text-right">
+                    <span
+                      className={`chip ${
+                        p.margin >= 25 ? "bg-emerald-50 text-emerald-600" : p.margin >= 10 ? "bg-amber-50 text-amber-600" : "bg-red-50 text-red-500"
+                      }`}
+                    >
+                      {p.margin.toFixed(0)}%
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
