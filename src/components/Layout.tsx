@@ -7,6 +7,7 @@ import {
   ListTodo,
   PieChart,
   Wallet,
+  CreditCard,
   Users,
   Menu,
   X,
@@ -24,6 +25,7 @@ const nav = [
   { to: "/add", label: "Yangi yozuv", icon: PlusCircle },
   { to: "/tasks", label: "Vazifalar", icon: ListTodo },
   { to: "/reports", label: "Hisobotlar", icon: PieChart },
+  { to: "/payments", label: "To'lovlar", icon: CreditCard },
   { to: "/accounts", label: "Hisoblar", icon: Wallet },
   { to: "/workers", label: "Ishchilar", icon: Users },
 ];

@@ -68,7 +68,22 @@ export interface Worker {
   position: string; // lavozim: Ombor, Sotuv, Cargo...
 }
 
-// Hisob (karta / patent / naqd) qoldiqlari
+// ── To'lov tizimlari (Payme / Click) tranzaksiyalari ──
+export type PaymentProvider = "payme" | "click";
+export type PaymentStatus = "muvaffaqiyatli" | "kutilmoqda" | "bekor";
+
+export interface Payment {
+  id: string;
+  provider: PaymentProvider;
+  amount: number; // so'mda
+  cardMask: string; // yashirilgan karta, masalan "**** 1234"
+  orderId: string; // biriktirilgan buyurtma / hisob ID (kim ekanini aniqlash)
+  payer?: string; // mijoz nomi yoki telefon (agar mavjud bo'lsa)
+  status: PaymentStatus;
+  paidAt: string; // ISO sana
+}
+
+// Hisob (karta / soliq / naqd) qoldiqlari
 export type AccountType = "karta" | "naqd" | "soliq" | "bank";
 
 export interface Account {
