@@ -71,18 +71,34 @@ function TransactionForm({ addTransaction, workers, toast, navigate }: any) {
   const [thinking, setThinking] = useState(false);
   const [heard, setHeard] = useState("");
   const [viaVoice, setViaVoice] = useState(false);
+  const [voiceError, setVoiceError] = useState(false); // AI to'liq aniqlay olmadi
+  const [savedFlash, setSavedFlash] = useState(false);
 
   const applyParsed = async (text: string) => {
     setHeard(text);
     setThinking(true);
+    setVoiceError(false);
+    setSavedFlash(false);
     const p = await parseTransactionFromText(text);
     setType(p.type);
-    setAmount(String(p.amount));
+    setAmount(p.amount ? String(p.amount) : "");
     setCategory(p.category);
     setSource(p.source);
     setNote(p.note);
     setViaVoice(true);
     setThinking(false);
+
+    // To'liq aniqlandimi? Summa > 0 va kategoriya aniq bo'lsa — AVTOMATIK saqlash
+    const ok = p.amount > 0 && p.category !== "boshqa";
+    if (ok) {
+      addTransaction({ type: p.type, amount: p.amount, category: p.category, source: p.source, note: p.note || "—", createdBy, viaVoice: true });
+      toast(`Avtomatik saqlandi: ${p.type === "kirim" ? "+" : "−"}${fmtMoney(p.amount)} (${categoryLabel[p.category]})`, "success");
+      setSavedFlash(true);
+    } else {
+      // Aniqlanmadi — qizil, saqlanmaydi, qayta yozish kerak
+      setVoiceError(true);
+      toast("AI to'liq aniqlay olmadi — tuzating yoki qayta yozing", "warning");
+    }
   };
 
   const handleVoice = () => {
@@ -98,16 +114,21 @@ function TransactionForm({ addTransaction, workers, toast, navigate }: any) {
       },
       () => {
         setRecording(false);
-        applyParsed("Alicargo cargo to'lovi 1500000 so'm");
+        setVoiceError(true);
+        toast("Ovoz aniqlanmadi — qayta urinib ko'ring", "warning");
       },
     );
     if (!d) setRecording(false);
   };
 
+  const amountInvalid = !Number(amount);
+  const categoryInvalid = category === "boshqa" && voiceError;
+
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     const num = Number(amount);
     if (!num) {
+      setVoiceError(true);
       toast("Summa kiritilmadi", "warning");
       return;
     }
@@ -118,24 +139,41 @@ function TransactionForm({ addTransaction, workers, toast, navigate }: any) {
 
   return (
     <div className="space-y-5 animate-fadeIn">
-      <div className="bg-brand-50 border border-brand-100 rounded-2xl p-5">
-        <div className="flex items-center gap-2 text-brand-700 font-semibold mb-2">
+      <div
+        className={`rounded-2xl p-5 border transition ${
+          voiceError ? "bg-red-50 border-red-200" : savedFlash ? "bg-emerald-50 border-emerald-200" : "bg-brand-50 border-brand-100"
+        }`}
+      >
+        <div className={`flex items-center gap-2 font-semibold mb-2 ${voiceError ? "text-red-600" : savedFlash ? "text-emerald-700" : "text-brand-700"}`}>
           <Sparkles size={18} /> Ovozli kiritish (AI)
         </div>
         <p className="text-sm text-slate-600 mb-3">
-          Gapirib kirim/chiqimni ayting — {aiEnabled ? "Gemini AI" : "tizim"} avtomatik to'ldiradi.
-          <span className="text-slate-400"> {aiEnabled ? "(Gemini ulangan)" : "(AI kalitsiz — mock)"}</span>
+          Gapirib ayting — to'liq aniqlansa <b>avtomatik saqlanadi</b>.
+          <span className="text-slate-400"> {aiEnabled ? "(Gemini ulangan)" : "(AI mock)"}</span>
         </p>
-        <button
-          type="button"
-          onClick={handleVoice}
-          disabled={recording || thinking}
-          className={`btn ${recording ? "bg-red-500 text-white animate-pulse" : "btn-primary"}`}
-        >
-          {recording ? <Square size={16} /> : <Mic size={16} />}
-          {recording ? "Tinglanmoqda..." : thinking ? "AI tahlil qilmoqda..." : "Gapirib kiritish"}
-        </button>
-        {heard && <p className="text-xs text-slate-500 mt-2">Eshitildi: "{heard}"</p>}
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={handleVoice}
+            disabled={recording || thinking}
+            className={`btn ${recording ? "bg-red-500 text-white animate-pulse" : "btn-primary"}`}
+          >
+            {recording ? <Square size={16} /> : <Mic size={16} />}
+            {recording ? "Tinglanmoqda..." : thinking ? "AI tahlil qilmoqda..." : "Gapirib kiritish"}
+          </button>
+          {(heard || voiceError) && !recording && !thinking && (
+            <button type="button" onClick={handleVoice} className="btn-ghost">
+              <Mic size={15} /> Qayta yozish
+            </button>
+          )}
+        </div>
+        {heard && (
+          <p className={`text-xs mt-2 ${voiceError ? "text-red-500" : "text-slate-500"}`}>
+            Eshitildi: "{heard}"
+            {voiceError && " — to'liq aniqlanmadi, pastdan tuzating yoki qayta yozing"}
+            {savedFlash && " ✓ saqlandi"}
+          </p>
+        )}
       </div>
 
       <form onSubmit={submit} className="card p-5 space-y-4 animate-slideUp">
@@ -159,8 +197,15 @@ function TransactionForm({ addTransaction, workers, toast, navigate }: any) {
         </div>
 
         <Field label="Summa (so'm)">
-          <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0" className="input" />
-          {amount && <span className="text-xs text-slate-400">{fmtMoney(Number(amount))}</span>}
+          <input
+            type="number"
+            value={amount}
+            onChange={(e) => { setAmount(e.target.value); setVoiceError(false); }}
+            placeholder="0"
+            className={`input ${voiceError && amountInvalid ? "border-red-400 ring-2 ring-red-100" : ""}`}
+          />
+          {amount && Number(amount) > 0 && <span className="text-xs text-slate-400">{fmtMoney(Number(amount))}</span>}
+          {voiceError && amountInvalid && <span className="text-xs text-red-500">Summa aniqlanmadi — kiriting</span>}
         </Field>
 
         <div className="grid grid-cols-2 gap-4">
@@ -172,11 +217,16 @@ function TransactionForm({ addTransaction, workers, toast, navigate }: any) {
             </select>
           </Field>
           <Field label="Kategoriya">
-            <select value={category} onChange={(e) => setCategory(e.target.value as TxCategory)} className="input">
+            <select
+              value={category}
+              onChange={(e) => { setCategory(e.target.value as TxCategory); setVoiceError(false); }}
+              className={`input ${categoryInvalid ? "border-red-400 ring-2 ring-red-100" : ""}`}
+            >
               {categories.map((c) => (
                 <option key={c} value={c}>{categoryLabel[c]}</option>
               ))}
             </select>
+            {categoryInvalid && <span className="text-xs text-red-500">Kategoriya aniqlanmadi — tanlang</span>}
           </Field>
         </div>
 
